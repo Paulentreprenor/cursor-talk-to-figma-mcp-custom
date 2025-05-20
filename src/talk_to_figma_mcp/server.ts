@@ -2098,6 +2098,46 @@ This strategy enables transferring content and property overrides from a source 
   }
 );
 
+// Keep the simple version of the toollllllll
+server.tool(
+  "inject_messages",
+  "Inject custom messages into the selected node",
+  {
+    nodeId: z.string().describe("Node to inject into"),
+    messages: z.array(
+      z.object({
+        sender: z.string(),
+        text: z.string()
+      })
+    ).describe("Messages to inject (with sender and text)")
+  },
+  async ({ nodeId, messages }) => {
+    try {
+      const result = await sendCommandToFigma("inject_messages", {
+        nodeId,
+        messages
+      });
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result)
+          }
+        ]
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error injecting messages: ${error instanceof Error ? error.message : String(error)}`
+          }
+        ]
+      };
+    }
+  }
+);
+
 // Set Layout Mode Tool
 server.tool(
   "set_layout_mode",
@@ -2543,6 +2583,7 @@ This detailed process ensures you correctly interpret the reaction data, prepare
 );
 
 
+
 // Define command types and parameters
 type FigmaCommand =
   | "get_document_info"
@@ -2582,7 +2623,8 @@ type FigmaCommand =
   | "set_item_spacing"
   | "get_reactions"
   | "set_default_connector"
-  | "create_connections";
+  | "create_connections"
+  | "inject_messages";
 
 type CommandParams = {
   get_document_info: Record<string, never>;
@@ -2725,7 +2767,10 @@ type CommandParams = {
       text?: string;
     }>;
   };
-  
+  inject_messages: {
+    nodeId: string;
+    messages: Array<{ sender: string; text: string }>;
+  };
 };
 
 
@@ -3004,6 +3049,7 @@ server.tool(
     }
   }
 );
+
        
 // Start the server
 async function main() {
@@ -3026,6 +3072,9 @@ main().catch(error => {
   logger.error(`Error starting FigmaMCP server: ${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);
 });
+
+export { server };
+
 
 
 
